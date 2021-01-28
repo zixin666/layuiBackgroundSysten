@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  {{ include './common/linkcss.html' }}
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+  
+  
+   <!-- 引入左边侧边栏 -->
+   {{ include './common/header.html' }}
+  
+  <!-- 引入左边侧边栏 -->
+  {{ include './common/side.html' }}
+  
+  <div class="layui-body">
+    <!-- 内容主体区域 -->
+    <div style="padding: 15px;">
+        <form class="layui-form" action="">
+           <!-- <input type="hidden" name="cat_id" value=''> -->
+            <div class="layui-form-item">
+              <label class="layui-form-label">分类名称：</label>
+              <div class="layui-input-inline">
+                <input type="text" name="name" lay-verify="required" placeholder="分类名称" autocomplete="off" class="layui-input">
+              </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">排序：</label>
+                <div class="layui-input-inline">
+                  <input type="number" name="sort"  required  lay-verify="number"  autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">添加时间：</label>
+                <div class="layui-input-inline">
+                  <input type="text"  id="add_date"  name="add_date" required  lay-verify="required"  autocomplete="off" class="layui-input">
+                </div>
+            </div>
+                        
+           
+            <div class="layui-form-item">
+              <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="formDemo">编辑</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+              </div>
+            </div>
+        </form>
+    </div>
+  </div>
+  
+    <!-- 引入左边侧边栏 -->
+    {{ include './common/footer.html' }}
+  
+</div>
+{{ include './common/scriptjs.html' }}
+<script>
+
+  let url = location.href;
+  let reg = /cat_id=(.*)&?/;
+  let [,cat_id] = [...reg.exec(url)]
+  // 通过cat_id发ajax,获取当前分类的数据即可，在赋值给模板即可
+  $.ajax({
+    url:"/getOneCate?cat_id="+cat_id,
+  }).then(res=>{
+    let {errcode,name,sort,add_date,cat_id} = res;
+    add_date = util.date_format(add_date)
+    if(errcode == 0){
+      //给表单赋值，进行数据的回显
+      $("input[name='name']").val(name)
+      $("input[name='sort']").val(sort)
+      $("input[name='add_date']").val(add_date)
+      // $("input[name='cat_id']").val(cat_id)
+    }
+    
+  })
+//JavaScript代码区域
+layui.use(['element','form','layer','laydate'], function(){
+  var element = layui.element;
+  var layer = layui.layer;
+
+  var form = layui.form;
+  var laydate = layui.laydate
+  
+  //监听提交
+  form.on('submit(formDemo)', function(data){
+    let oldText = data.elem.innerText;
+    $(data.elem).addClass('layui-btn-disabled').text('编辑中..')
+    data = {
+      ...data.field,
+      cat_id
+    }
+  
+    $.ajax({
+      type:'post',
+      url:"/updCate",
+      data:data
+    }).then(res=>{
+      $(data.elem).removeClass('layui-btn-disabled').text(oldText)
+      let {errcode,message} = res;
+      if(errcode == 0){
+        layer.msg(message)
+        location.href="/catindex";
+      }else{
+        layer.msg(message)
+      }
+    })
+    return false; 
+  });
+
+  laydate.render({
+    elem: '#add_date',
+    type: "datetime"
+  });
+
+  
+
+});
+
+
+
+
+
+
+
+</script>
+</body>
+</html>

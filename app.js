@@ -3,6 +3,7 @@ const path = require('path');
 const app = express();
 
 
+let session = require('express-session');
 
 
 
@@ -26,9 +27,33 @@ app.engine('html', express_template);
 
 //使用模板引擎扩展名为html
 app.set('view engine', 'html');
-
-
+let options = {
+    name:"SESSIONID", // 待会写入到cookie中标识
+    secret: "fuhsfgw3453", // 用来加密会话
+    cookie: {
+        httpOnly: true,
+        secure: false, // false-http(默认)
+        maxAge:60000*24, // session在cookies存活24分钟，
+        
+    }
+};
+app.use( session(options) )
+// 在进入到路由匹配函数之前，要进行验证权限
+app.use(function(req,res,next){
+    let path = req.path.toLowerCase();
+    let noCheckAuth = ['/login','/signin','/logout']
+    if(noCheckAuth.includes(path)){
+        next();
+    }else{
+// 需要验证权限（session）
+        if(req.session.userInfo){
+            next()
+        }else{
+            next()
+        }
+    }
+});
 // 使用路由中间件 req.body
 app.use(router)
 
-app.listen(4000,_=>console.log('server is running at port 4000'))
+app.listen(4000,_=>console.log('4000'))

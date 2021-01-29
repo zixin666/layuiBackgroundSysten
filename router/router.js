@@ -11,7 +11,17 @@ let upload = multer({ dest: 'uploads/' })
 // 导入相应的控制器
 const CateController = require('../controller/CateController.js');
 const ArtController = require('../controller/ArtController.js');
+const UserController = require('../controller/UserController.js');
 
+// 统计出分类的文章总数
+router.get('/cateCount',async (req,res)=>{
+    let sql = `select count(*) total ,t2.name,t1.cat_id from article t1 
+                left join category t2 
+                on t1.cat_id = t2.cat_id 
+                group by  t1.cat_id`;
+    let data = await model(sql); // [{},{},{},{}]
+    res.json(data)
+})
 // 匹配 / 或 /admin
 router.get(/^\/$|^\/admin$/,(req,res)=>{
     res.render('index.html')

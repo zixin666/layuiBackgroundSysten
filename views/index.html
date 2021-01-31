@@ -9,14 +9,17 @@
 <body class="layui-layout-body">
 <div class="layui-layout layui-layout-admin">
    <!-- 引入左边侧边栏 -->
-   {{ include './common/header.html' }}
+   {{ include './common/header.html'  }}
   
   <!-- 引入左边侧边栏 -->
-  {{ include './common/side.html' }}
+  {{ include './common/side.html'  }}
   
   <div class="layui-body">
     <!-- 内容主体区域 -->
-    <div style="padding: 15px;">内容主体区域</div>
+    <div style="padding: 15px;display:flex" >
+      <div id="cate" style="width: 600px;height:400px;"></div>
+      <div id="art" style="width: 600px;height:400px;"></div>
+    </div>
   </div>
 
   <!-- 引入左边侧边栏 -->
@@ -25,7 +28,79 @@
  
 </div>
 <script src="/public/layui/layui.js"></script>
+<script src="/public/js/echarts.min.js"></script>
 <script>
+
+  // 获取分类统计的数据
+  $.get('/cateCount',(res)=>{
+     let names = []; // 保存分类名称
+     let totals = []; // 保存文章分类的总文章数
+     res.map(v=>{
+      names.push(v.name);
+      totals.push(v.total)
+     })
+    let dom = document.getElementById("cate")
+    let text = '分类文章统计'
+    initEchart(dom,names,totals,text,'bar');
+  })
+  // 获取每月文章统计的数据
+  $.get('/artCount',(res)=>{
+     let months = []; // 保存分类名称
+     let totals = []; // 保存文章分类的总文章数
+     res.map(v=>{
+      months.push(v.month + '月');
+      totals.push(v.total)
+     })
+     let dom = document.getElementById("art")
+     let text = '每月文章统计'
+    initEchart(dom,months,totals,text,'line');
+  })
+
+  // 加载图表
+  function initEchart(dom,names,total,text,type){
+    var myChart = echarts.init(dom);
+ 
+      // 指定图表的配置项和数据
+      var option = {
+          title: {
+              text: text,
+              textStyle: {
+              }
+          },
+          color: "skyblue",
+          tooltip: {
+            show:true,
+            axisPointer:{
+              type: 'cross'
+            }
+          },
+          legend: {
+              data:['销量']
+          },
+          xAxis: {
+              data: names
+          },
+          yAxis: {},
+          series: [{
+              name: '文章篇数',
+              type: type, 
+              data: total,
+              label: {
+                show:true,
+                fontSize: 20,
+                showBackground: true,
+                backgroundStyle:{
+                  color: 'rgba(180, 180, 180, 0.2)'
+                }
+              }
+          }]
+      };
+
+      myChart.setOption(option);
+  }
+
+ 
+z
 layui.use('element', function(){
   var element = layui.element;
   

@@ -24,15 +24,44 @@
 
       <div style="padding: 15px;">
         <h2>文章管理</h2>
-        <div>
-            <button type="button" id="add"  class="layui-btn">
-                <i class="layui-icon">&#xe608;</i> 添加文章
-            </button>
-        </div>
-       
+        
         <table class="layui-hide" id="test" lay-filter="test"></table>
       </div>
 
+      <!-- <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-xs" lay-event="show">查看内容</a>
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+      </script> -->
+
+      <script type="text/html" id="leftContent">
+        <div  style="display:flex;">
+            <button type="button" id="add" style="margin-right:50px"  class="layui-btn layui-btn-normal">
+                <i class="layui-icon">&#xe608;</i> 添加文章
+            </button>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">标题</label>
+                <div class="layui-input-inline">
+                  <input type="text" name="title" id="title" required placeholder="请输入标题" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">状态</label>
+                <div class="layui-input-inline">
+                  <select id="status" name="status" lay-verify="required">
+                    <option value="">全部</option>
+                    <option value="0">未发布</option>
+                    <option value="1">已发布</option>
+                    <option value="2">不通过</option>
+                  </select>
+                </div>
+              </div>
+         
+          <button class="layui-btn" id="search">搜索</button>
+        </div>
+      </script>
 
 
     </div>
@@ -44,7 +73,8 @@
   {{ include './common/scriptjs.html' }}
   <script src="/public/js/lightbox-plus-jquery.min.js"></script>
   <script>
-
+  
+    //JavaScript代码区域
     layui.use(['element', 'table'], function () {
       var element = layui.element;
       var table = layui.table;
@@ -53,9 +83,10 @@
         elem: '#test',
         url: '/allarticle',
         cellMinWidth: 100,
-        toolbar: '#toolbarDemo'
+        id:"testReload",
+        toolbar: '#leftContent' //开启头部工具栏，并为其绑定左侧模板
           ,
-        defaultToolbar: ['filter', 'exports', 'print', { 
+        defaultToolbar: ['filter', 'exports', 'print', { //自定义头部工具栏右侧图标。如无需自定义，去除该参数即可
           title: '提示',
           layEvent: 'LAYTABLE_TIPS',
           icon: 'layui-icon-tips'
@@ -63,9 +94,9 @@
         limit: 5,
         limits: [5, 10, 15, 20],
         request: {
-          pageName: 'page' //页码的参数名称
+          pageName: 'page' //页码的参数名称，默认：page
             ,
-          limitName: 'limit' //每页数据量的参数名
+          limitName: 'limit' //每页数据量的参数名，默认：limit
 
         },
         where: {
@@ -119,7 +150,6 @@
             title: '状态',
             width: 100,
             templet: (item) => {
-              // 映射关系 或 new Map也行
               let statusMap = {
                 "0": '<span class="layui-badge layui-bg-blue">未发布</span>',
                 "1": "<span class='layui-badge layui-bg-green'>已发布(通过)</span>",
@@ -140,10 +170,8 @@
           }, {
             fixed: 'right',
             title: '操作',
-            // toolbar: '#barDemo',1
             templet({status}){
               let temStr = `<a class="layui-btn layui-btn-xs" lay-event="show">查看内容</a>`;
-              // 当前状态是0，说明是未发布，我们可以对其进行审核
               switch(status){
                 case 0: // 未发布 
                   temStr += `<a class="layui-btn layui-btn-xs layui-bg-orange" lay-event="verify">待审核</a>`
@@ -179,7 +207,6 @@
           data,
           event
         } = obj;
-        // data就是当前的一行记录
         let {art_id,title,content} = data;
         switch (event) {
           case "del": // 删除
@@ -205,7 +232,7 @@
         layer.open({
             title:title,
             type: 1,
-            skin: 'layui-layer-rim', 
+            skin: 'layui-layer-rim', //加上边框
             area: ['1100px', '640px'], 
             content: "<div style='padding:10px'>" + content + "</div>"
           });
@@ -234,15 +261,13 @@
 
       // 跳转到文章编辑页面
       function edit(art_id){
-        // 需要把id携带过去
         location.href = `/artedit?art_id=${art_id}`
       }
 
-      // 审核文章 发送ajax请求，修改文章的状态
+      // 审核文章
       function verify(art_id){
-        //询问框
       layer.confirm('是否通过审核', {
-          btn: ['通过','不通过'] //按钮
+          btn: ['通过','不通过'] 
         }, function(){
           updArtStatus(art_id,1)
         }, function(){
@@ -251,25 +276,38 @@
         });
       }
 
-
-
       // 更新文章状态
       function updArtStatus(art_id,status){
         $.post('/updstatus',{art_id,status},({errcode,message})=>{
           if(errcode == 0){
-            tableUI.reload(); // 只是重载表格（局部刷新）
+            tableUI.reload();
           }
           layer.msg(message)
         },'json')
       }
-
       
-
       // 跳转到文章添加页面
       $("#add").on('click',()=>{
         location.href = '/addart'
       })
 
+      //单击搜索进行表格筛选，让表格进行重载
+      $('body').on('click','#search',function(){
+			let title = $('#title').val();
+			let status = $('#status').val();
+			//重载
+			table.reload('testReload', {
+				page: {
+				curr: 1 //第 1 页开始
+				}
+				,where: {
+				title,status
+				}
+			});
+			$('#title').val(title);
+			$('#status').val(status);
+        })
+        
     });
   </script>
 </body>

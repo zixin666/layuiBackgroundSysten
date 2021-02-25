@@ -4,8 +4,10 @@ const app = express();
 
 
 let session = require('express-session');
+let cors = require('cors');
 
-
+// 设置跨域
+app.use(cors())
 
 // 导入路由模块
 const router = require('./router/router.js')
@@ -38,6 +40,9 @@ let options = {
     }
 };
 app.use( session(options) )
+
+// 前台路由
+app.use('/api',apiRouter);
 // 在进入到路由匹配函数之前，要进行验证权限
 app.use(function(req,res,next){
     let path = req.path.toLowerCase();
@@ -49,7 +54,7 @@ app.use(function(req,res,next){
         if(req.session.userInfo){
             next()
         }else{
-            next()
+            res.redirect('/login')
         }
     }
 });
